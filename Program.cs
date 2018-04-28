@@ -12,8 +12,15 @@ namespace CsvToJson
     {
         static void Main(string[] args)
         {
-            FileInfo fileInfo = new FileInfo(@"c:\temp\test.xlsx");
+            
+            var fileInfo = new FileInfo(args[0]);
+            var directoryInfo = args.Length == 2 ? new DirectoryInfo(args[1]) : fileInfo.Directory;
+
+            Console.WriteLine($"FilePath: {fileInfo.FullName}");
+            Console.WriteLine($"DirectoryPath: {directoryInfo?.FullName}");
+
             var languages = ReadFile(fileInfo);
+            
             JObject jObject;
             languages.Skip(1).ToList().ForEach(language =>
             {
@@ -22,11 +29,9 @@ namespace CsvToJson
                 {
                     jObject[translation.Key] = translation.Value;
                 });
-                WriteFile(jObject, fileInfo, language.Key);                
-            });            
-            
-            Console.WriteLine("Press Enter to exit!");
-            Console.ReadLine();
+                WriteFile(jObject, directoryInfo, language.Key);                
+            });
+            Console.WriteLine("Complete!");
         }
         private static List<Language> ReadFile(FileInfo fileInfo)
         {
@@ -42,12 +47,12 @@ namespace CsvToJson
                 {
                     Row = 1,
                     Col = hcell.Select(x => x.Start.Column).FirstOrDefault(),
-                    Key = hcell.Select(x => x.Value).FirstOrDefault().ToString(),
+                    Key = hcell.Select(x => x.Value).FirstOrDefault()?.ToString(),
 
                     Translations = hcell.Skip(1).Select((cell, rowIndex) => new Translation
                     {
-                        LangKey = hcell.Select(x => x.Value).FirstOrDefault().ToString(),
-                        Key = columns.FirstOrDefault().Where(x=>x.Start.Row == cell.Start.Row).Select(x=>x.Value).FirstOrDefault().ToString(),
+                        LangKey = hcell.Select(x => x.Value).FirstOrDefault()?.ToString(),
+                        Key = columns.FirstOrDefault().Where(x=>x.Start.Row == cell.Start.Row).Select(x=>x.Value).FirstOrDefault()?.ToString(),
                         Value = cell.Value.ToString(),
                         Row = cell.Start.Row,
                         Col = cell.Start.Column
@@ -56,10 +61,10 @@ namespace CsvToJson
                 return languages;
             }
         }
-        private static void WriteFile(JObject contents, FileInfo fileInfo, string languageKey)
+        private static void WriteFile(JObject contents, FileSystemInfo directory, string languageKey)
         {
             var fileName = string.Format("{0}.json", languageKey);
-            var filePath = string.Format("{0}\\{1}", fileInfo.DirectoryName, fileName);
+            var filePath = string.Format("{0}\\{1}", directory.FullName, fileName);
             var fi = new FileInfo(filePath);
             if (fi.Exists)
             {
@@ -69,6 +74,7 @@ namespace CsvToJson
             {
                 Byte[] bytes = new UTF8Encoding(true).GetBytes(contents.ToString());
                 fs.Write(bytes, 0, bytes.Length);
+                Console.WriteLine($"File generated: {fi.FullName}");
             }
         }
     }
@@ -79,11 +85,6 @@ namespace CsvToJson
         public int Col { get; set; }
         public int Row { get; set; }
 
-        public Language()
-        {
-        }
-
-
     }
     class Translation
     {
@@ -92,9 +93,6 @@ namespace CsvToJson
         public string Value { get; set; }
         public int Col { get; set; }
         public int Row { get; set; }
-        public Translation()
-        {
-        }
     }
 
 

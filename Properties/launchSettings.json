@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CsvToJson": {
+      "commandName": "Project",
+      "commandLineArgs": "D:\\Users\\don\\Documents\\ScanIT-Translations.xlsx D:\\Users\\don\\Documents\\"
+    }
+  }
+}
